@@ -1,0 +1,63 @@
+import math
+import random
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import stats
+number_of_experiments = 10000
+span = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
+m = 5
+a = 1
+T = 10
+mu = int(a * T)
+array_trevoga =[]
+for one_u in span: #сравнивания с порогом для каждого значения span
+    chastota0 = 0
+    for j in range(number_of_experiments):#цикл для проведения N опытов
+        t0 = 0
+        array_t = np.array([])
+        array_ti = np.array([])
+        while t0 < m: #формирования моментов ti
+            array_t = np.append(array_t, t0)
+            delta_t = -np.log(random.random()) / mu
+            t0 += delta_t
+        array_pi= []
+        for e in range(len(array_t)):#подсчёт количества скачков
+            if 1/2 <= array_t[e] <= m - 1/2:
+                tleft = array_t[e] - 0.5
+                tright = array_t[e] + 0.5
+                nl = 0
+                while nl <= e and array_t[e - nl] > tleft:
+                    nl += 1
+                nr = 0
+                while nr <= len(array_t) - 1 - e and array_t[e + nr] < tright:
+                    nr += 1
+                array_pi.append(nl + nr - 1)
+        r = 0
+        for one_r in array_pi:#нахождение максимального значения PIli
+            if one_r >= r:
+                r = one_r
+   #сравнение по span-порогу , при каком значение порога нужно добавить 1
+        if r > one_u*math.sqrt(mu) + mu:#вычисляется в одном опыте значение np
+            Np = 1
+        else:
+            Np = 0
+        chastota = chastota0 + Np #нахождение суммы превышения порога
+        chastota0 = chastota
+    print(chastota)
+    trevoga = chastota/number_of_experiments #нахождение вероятности ложной тревоги
+    array_trevoga.append(trevoga)
+print(array_trevoga)
+#сравнение с теорией
+m2 = 5
+y2 = lambda b: 1 - math.e ** ((-m2 * b * math.e ** (-(b) ** 2 / 2)) / math.sqrt(2 * math.pi))
+b = np.linspace(1, 5, 100)
+x = np.arange(1 ,5, 0.1) #задаём промежуток оси абсцисс
+y = 1 - stats.norm.cdf(x,loc = 0,scale = 1) #записываем функцию (интеграл взят из готовой библиотеки)
+fig = plt.subplots()
+plt.plot(b, y2(b),'-', label='теория')
+plt.plot(x, y, '*', label = 'известное время' )
+plt.scatter(span, array_trevoga)
+plt.axis([1, 5, 10**(-3), 1.5])
+plt.yscale('log')
+plt.legend()
+plt.show()
